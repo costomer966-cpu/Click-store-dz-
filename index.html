@@ -29,7 +29,7 @@
                 <option value="fr">🇫🇷 FR</option>
                 <option value="ar">🇩🇿 AR</option>
             </select>
-            <button onclick="openCart()" class="relative p-3 bg-white/5 rounded-xl hover:bg-white/10 transition">
+            <button onclick="openCart()" class="relative p-3 bg-white/5 rounded-xl hover:bg-white/10 transition border border-white/10">
                 🛒 <span id="cart-count" class="absolute -top-1 -right-1 bg-purple-600 text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span>
             </button>
         </div>
@@ -74,7 +74,7 @@
                     </div>
                 </div>
 
-                <div id="pay-details" class="hidden glass p-5 rounded-2xl animate-pulse">
+                <div id="pay-details" class="hidden glass p-5 rounded-2xl">
                     <div id="baridi-info" class="hidden">
                         <div class="flex justify-between items-center mb-4 bg-white/5 p-3 rounded-xl border border-white/10">
                             <span class="text-sm font-mono tracking-tighter">00799999002892667082</span>
@@ -118,12 +118,12 @@
             fr: {
                 title: "Vos abonnements préférés", desc: "Le store n°1 en Algérie pour vos abonnements premium.",
                 month: "Mois", year: "An", total: "Total", confirm: "Envoyer sur Instagram 🚀",
-                pay_method: "Paiement :", name: "Nom complet", account: "Compte (Email/User)", copy: "Copié !"
+                pay_method: "Paiement :", name: "Nom complet", account: "Compte (Email/User)", copy: "Copié !", added: "AJOUTÉ ✅"
             },
             ar: {
                 title: "اشتراكاتك المفضلة", desc: "المتجر رقم 1 في الجزائر لخدمات البريميوم.",
                 month: "شهر", year: "سنة", total: "المجموع", confirm: "إرسال الطلب عبر إنستغرام 🚀",
-                pay_method: "وسيلة الدفع:", name: "الاسم الكامل", account: "الحساب (إيميل أو يوزر)", copy: "تم النسخ!"
+                pay_method: "وسيلة الدفع:", name: "الاسم الكامل", account: "الحساب (إيميل أو يوزر)", copy: "تم النسخ!", added: "تمت الإضافة ✅"
             }
         };
 
@@ -149,7 +149,7 @@
                             </div>
                         </div>
                         <select id="sel-${p.id}" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold outline-none cursor-pointer focus:border-purple-500 transition-all">${options}</select>
-                        <button onclick="addToCart('${p.id}')" class="w-full bg-white text-black font-black py-4 rounded-2xl hover:bg-purple-600 hover:text-white transition-all transform active:scale-95 shadow-xl">AJOUTER</button>
+                        <button onclick="addToCart(event, '${p.id}')" class="w-full bg-white text-black font-black py-4 rounded-2xl hover:bg-purple-600 hover:text-white transition-all transform active:scale-95 shadow-xl">AJOUTER</button>
                     </div>
                 `;
             });
@@ -174,30 +174,43 @@
         function openCart() { document.getElementById('modal').classList.remove('hidden'); }
         function closeModal() { document.getElementById('modal').classList.add('hidden'); }
 
-        function addToCart(id) {
+        function addToCart(event, id) {
             const p = products.find(x => x.id === id);
             const selIdx = document.getElementById(`sel-${id}`).value;
             const price = p.prices[selIdx];
             cart.push({ name: p.name, duration: price.d, price: price.p });
             updateCartUI();
-            openCart();
+            
+            // Effect Visual on button
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = dict[currentLang].added;
+            btn.classList.add('bg-green-600', 'text-white');
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.classList.remove('bg-green-600', 'text-white');
+            }, 800);
         }
 
         function updateCartUI() {
             document.getElementById('cart-count').innerText = cart.length;
             const list = document.getElementById('cart-list');
-            list.innerHTML = cart.map((i, idx) => `
-                <div class="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/5">
-                    <div>
-                        <p class="text-sm font-black">${i.name}</p>
-                        <p class="text-[10px] text-gray-500 uppercase">${i.duration === 12 ? (currentLang === 'ar' ? 'سنة' : 'An') : i.duration + ' ' + (currentLang === 'ar' ? 'شهر' : 'Mois')}</p>
+            if(cart.length === 0) {
+                list.innerHTML = `<p class="text-center text-gray-500 py-4 italic">Le panier est vide</p>`;
+            } else {
+                list.innerHTML = cart.map((i, idx) => `
+                    <div class="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/5">
+                        <div>
+                            <p class="text-sm font-black">${i.name}</p>
+                            <p class="text-[10px] text-gray-500 uppercase">${i.duration === 12 ? (currentLang === 'ar' ? 'سنة' : 'An') : i.duration + ' ' + (currentLang === 'ar' ? 'شهر' : 'Mois')}</p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="font-black text-purple-400">${i.price} DA</span>
+                            <button onclick="removeItem(${idx})" class="text-red-500 hover:scale-125 transition">✕</button>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-4">
-                        <span class="font-black text-purple-400">${i.price} DA</span>
-                        <button onclick="removeItem(${idx})" class="text-red-500 hover:scale-125 transition">✕</button>
-                    </div>
-                </div>
-            `).join('');
+                `).join('');
+            }
             const total = cart.reduce((a, b) => a + b.price, 0);
             document.getElementById('total-val').innerText = `${total} DA`;
         }
@@ -233,4 +246,5 @@
         render();
     </script>
 </body>
-</html>
+    </html>
+    
