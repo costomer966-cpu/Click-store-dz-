@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Click Store | Premium Services</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --accent: #a855f7; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #030303; color: white; transition: 0.3s; }
+        .arabic { font-family: 'Cairo', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.07); }
+        .product-card { transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .product-card:hover { border-color: var(--accent); transform: translateY(-8px); box-shadow: 0 10px 30px -10px rgba(168, 85, 247, 0.3); }
+        .product-img { width: 64px; height: 64px; border-radius: 16px; object-fit: cover; background: #111; }
+        select option { background: #111; color: white; }
+    </style>
+</head>
+<body class="min-h-screen pb-20">
+
+    <nav class="sticky top-0 z-50 glass m-4 rounded-3xl p-4 flex justify-between items-center max-w-6xl mx-auto">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl flex items-center justify-center font-bold shadow-lg">C</div>
+            <span class="text-xl font-extrabold tracking-tight">CLICK STORE</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <select id="lang-select" onchange="changeLang(this.value)" class="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm outline-none cursor-pointer hover:bg-white/10">
+                <option value="fr">🇫🇷 FR</option>
+                <option value="ar">🇩🇿 AR</option>
+            </select>
+            <button onclick="openCart()" class="relative p-3 bg-white/5 rounded-xl hover:bg-white/10 transition">
+                🛒 <span id="cart-count" class="absolute -top-1 -right-1 bg-purple-600 text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span>
+            </button>
+        </div>
+    </nav>
+
+    <header class="text-center py-16 px-4">
+        <h1 id="hero-title" class="text-5xl md:text-7xl font-extrabold mb-6 bg-gradient-to-b from-white to-gray-500 bg-clip-text text-transparent">Vos abonnements préférés</h1>
+        <p id="hero-desc" class="text-gray-400 max-w-2xl mx-auto text-lg">Profitez des meilleurs services premium avec une garantie totale et des prix imbattables.</p>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4">
+        <div id="shop-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+    </main>
+
+    <div id="modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+        <div class="glass w-full max-w-xl rounded-[2.5rem] overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-8 border-b border-white/5 flex justify-between items-center">
+                <h2 id="modal-title" class="text-2xl font-black">Confirmation</h2>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-white transition-all text-3xl">✕</button>
+            </div>
+            
+            <form id="order-form" onsubmit="handleOrder(event)" class="p-8 overflow-y-auto space-y-6">
+                <div id="cart-list" class="space-y-4"></div>
+                
+                <div class="space-y-4">
+                    <input type="text" id="inp-name" required class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-purple-500 transition-all">
+                    <input type="email" id="inp-email" required class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-purple-500 transition-all">
+                    <input type="text" id="inp-account" required class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-purple-500 transition-all">
+                </div>
+
+                <div class="space-y-4">
+                    <p id="pay-text" class="text-sm font-bold text-gray-400 uppercase tracking-widest">Paiement</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="group cursor-pointer">
+                            <input type="radio" name="pay" value="baridimob" required class="peer hidden" onchange="togglePay(this.value)">
+                            <div class="p-4 rounded-2xl border border-white/10 peer-checked:bg-purple-600 peer-checked:border-purple-600 transition-all text-center font-bold">BaridiMob</div>
+                        </label>
+                        <label class="group cursor-pointer">
+                            <input type="radio" name="pay" value="flexy" class="peer hidden" onchange="togglePay(this.value)">
+                            <div class="p-4 rounded-2xl border border-white/10 peer-checked:bg-orange-600 peer-checked:border-orange-600 transition-all text-center font-bold">Flexy</div>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="pay-details" class="hidden glass p-5 rounded-2xl animate-pulse">
+                    <div id="baridi-info" class="hidden">
+                        <div class="flex justify-between items-center mb-4 bg-white/5 p-3 rounded-xl border border-white/10">
+                            <span class="text-sm font-mono tracking-tighter">00799999002892667082</span>
+                            <button type="button" onclick="copyRIP()" class="bg-purple-600 px-4 py-2 rounded-lg text-xs font-black">COPY</button>
+                        </div>
+                        <label class="text-xs text-gray-500 block mb-2">Reçu / Capture (الوصل)</label>
+                        <input type="file" id="receipt" class="text-xs text-gray-400 w-full">
+                    </div>
+                    <div id="flexy-info" class="hidden text-center text-sm text-orange-400 font-bold">Contact Instagram Direct</div>
+                </div>
+
+                <div class="flex justify-between items-end border-t border-white/5 pt-6">
+                    <span id="total-text" class="text-gray-400 font-bold">Total</span>
+                    <span id="total-val" class="text-3xl font-black text-white">0 DA</span>
+                </div>
+
+                <button type="submit" id="btn-submit" class="w-full bg-gradient-to-r from-purple-600 to-blue-600 py-5 rounded-2xl font-black text-lg shadow-2xl shadow-purple-500/20 active:scale-95 transition-all uppercase tracking-tighter">Confirmer ✅</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            { id: 'netflix', name: 'Netflix', cat: 'Streaming', img: 'n.jpg', prices: [{d: 1, p: 800}, {d: 2, p: 1500}, {d: 3, p: 2200}] },
+            { id: 'spotify', name: 'Spotify Premium', cat: 'Streaming', img: 'spot.jpg', prices: [{d: 1, p: 800}, {d: 3, p: 1900}, {d: 6, p: 3400}, {d: 12, p: 5800}] },
+            { id: 'prime', name: 'Amazon Prime', cat: 'Streaming', img: 'amazon prime.jpg', prices: [{d: 1, p: 500}, {d: 3, p: 1300}, {d: 6, p: 1600}] },
+            { id: 'shahid', name: 'Shahid VIP', cat: 'Streaming', img: 'vip.jpg', prices: [{d: 1, p: 600}, {d: 12, p: 3900}] },
+            { id: 'chatgpt', name: 'ChatGPT Plus', cat: 'AI', img: 'chg.jpg', prices: [{d: 1, p: 800}] },
+            { id: 'chatgptgo', name: 'ChatGPT Go', cat: 'AI', img: 'chg.jpg', prices: [{d: 12, p: 2500}] },
+            { id: 'perplexity', name: 'Perplexity Pro', cat: 'AI', img: 'pur.jpg', prices: [{d: 12, p: 2400}] },
+            { id: 'gemini', name: 'Gemini Advanced', cat: 'AI', img: 'gimi.jpg', prices: [{d: 12, p: 1500}] },
+            { id: 'adobe', name: 'Adobe Creative Cloud', cat: 'Design', img: 'cloud.jpg', prices: [{d: 1, p: 1500}, {d: 3, p: 4000}, {d: 6, p: 6900}, {d: 12, p: 9800}] },
+            { id: 'canva', name: 'Canva Pro', cat: 'Design', img: 'canva.jpg', prices: [{d: 12, p: 500}] },
+            { id: 'capcut', name: 'CapCut Pro', cat: 'Design', img: 'cap.jpg', prices: [{d: 1, p: 1000}] },
+            { id: 'crunchyroll', name: 'Crunchyroll', cat: 'Entertainment', img: 'crunchy.jpg', prices: [{d: 1, p: 500}, {d: 3, p: 1200}, {d: 12, p: 2400}] },
+            { id: 'snapchat', name: 'Snapchat Plus', cat: 'Social', img: 'snap.jpg', prices: [{d: 1, p: 800}, {d: 12, p: 3400}] },
+            { id: 'duolingo', name: 'Duolingo Super', cat: 'Education', img: 'bird.jpg', prices: [{d: 12, p: 500}] }
+        ];
+
+        const dict = {
+            fr: {
+                title: "Vos abonnements préférés", desc: "Le store n°1 en Algérie pour vos abonnements premium.",
+                month: "Mois", year: "An", total: "Total", confirm: "Envoyer sur Instagram 🚀",
+                pay_method: "Paiement :", name: "Nom complet", account: "Compte (Email/User)", copy: "Copié !"
+            },
+            ar: {
+                title: "اشتراكاتك المفضلة", desc: "المتجر رقم 1 في الجزائر لخدمات البريميوم.",
+                month: "شهر", year: "سنة", total: "المجموع", confirm: "إرسال الطلب عبر إنستغرام 🚀",
+                pay_method: "وسيلة الدفع:", name: "الاسم الكامل", account: "الحساب (إيميل أو يوزر)", copy: "تم النسخ!"
+            }
+        };
+
+        let currentLang = 'fr';
+        let cart = [];
+
+        function render() {
+            const grid = document.getElementById('shop-grid');
+            grid.innerHTML = '';
+            products.forEach(p => {
+                const options = p.prices.map((pr, idx) => {
+                    const label = pr.d === 12 ? (currentLang === 'ar' ? 'سنة' : 'An') : `${pr.d} ${currentLang === 'ar' ? 'شهر' : 'Mois'}`;
+                    return `<option value="${idx}">${label} — ${pr.p} DA</option>`;
+                }).join('');
+
+                grid.innerHTML += `
+                    <div class="product-card glass p-6 rounded-[2.5rem] flex flex-col gap-6">
+                        <div class="flex items-center gap-5">
+                            <img src="${p.img}" class="product-img shadow-2xl" alt="${p.name}">
+                            <div>
+                                <h3 class="font-black text-xl tracking-tight">${p.name}</h3>
+                                <span class="text-[10px] text-purple-500 font-black uppercase tracking-widest">${p.cat}</span>
+                            </div>
+                        </div>
+                        <select id="sel-${p.id}" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold outline-none cursor-pointer focus:border-purple-500 transition-all">${options}</select>
+                        <button onclick="addToCart('${p.id}')" class="w-full bg-white text-black font-black py-4 rounded-2xl hover:bg-purple-600 hover:text-white transition-all transform active:scale-95 shadow-xl">AJOUTER</button>
+                    </div>
+                `;
+            });
+            updateTexts();
+        }
+
+        function updateTexts() {
+            const d = dict[currentLang];
+            document.getElementById('hero-title').innerText = d.title;
+            document.getElementById('hero-desc').innerText = d.desc;
+            document.getElementById('total-text').innerText = d.total;
+            document.getElementById('btn-submit').innerText = d.confirm;
+            document.getElementById('pay-text').innerText = d.pay_method;
+            document.getElementById('inp-name').placeholder = d.name;
+            document.getElementById('inp-email').placeholder = "Email";
+            document.getElementById('inp-account').placeholder = d.account;
+            document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            document.body.className = currentLang === 'ar' ? 'min-h-screen pb-20 arabic' : 'min-h-screen pb-20';
+        }
+
+        function changeLang(v) { currentLang = v; render(); updateCartUI(); }
+        function openCart() { document.getElementById('modal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+
+        function addToCart(id) {
+            const p = products.find(x => x.id === id);
+            const selIdx = document.getElementById(`sel-${id}`).value;
+            const price = p.prices[selIdx];
+            cart.push({ name: p.name, duration: price.d, price: price.p });
+            updateCartUI();
+            openCart();
+        }
+
+        function updateCartUI() {
+            document.getElementById('cart-count').innerText = cart.length;
+            const list = document.getElementById('cart-list');
+            list.innerHTML = cart.map((i, idx) => `
+                <div class="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/5">
+                    <div>
+                        <p class="text-sm font-black">${i.name}</p>
+                        <p class="text-[10px] text-gray-500 uppercase">${i.duration === 12 ? (currentLang === 'ar' ? 'سنة' : 'An') : i.duration + ' ' + (currentLang === 'ar' ? 'شهر' : 'Mois')}</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="font-black text-purple-400">${i.price} DA</span>
+                        <button onclick="removeItem(${idx})" class="text-red-500 hover:scale-125 transition">✕</button>
+                    </div>
+                </div>
+            `).join('');
+            const total = cart.reduce((a, b) => a + b.price, 0);
+            document.getElementById('total-val').innerText = `${total} DA`;
+        }
+
+        function removeItem(idx) { cart.splice(idx, 1); updateCartUI(); }
+
+        function togglePay(val) {
+            document.getElementById('pay-details').classList.remove('hidden');
+            document.getElementById('baridi-info').classList.toggle('hidden', val !== 'baridimob');
+            document.getElementById('flexy-info').classList.toggle('hidden', val !== 'flexy');
+        }
+
+        function copyRIP() {
+            navigator.clipboard.writeText('00799999002892667082');
+            alert(dict[currentLang].copy);
+        }
+
+        async function handleOrder(e) {
+            e.preventDefault();
+            if(cart.length === 0) return;
+            const name = document.getElementById('inp-name').value;
+            const account = document.getElementById('inp-account').value;
+            const pay = document.querySelector('input[name="pay"]:checked').value;
+            const total = cart.reduce((a, b) => a + b.price, 0);
+
+            const itemsStr = cart.map(i => `• ${i.name} (${i.duration} mois)`).join('\n');
+            const msg = `🛒 *COMMANDE CLICK STORE*\n👤 Client: ${name}\n🔐 Compte: ${account}\n📦 Articles:\n${itemsStr}\n💰 Total: ${total} DA\n💳 Paiement: ${pay.toUpperCase()}`;
+
+            try { await navigator.clipboard.writeText(msg); } catch(err) {}
+            window.open("https://www.instagram.com/click_store.dz", "_blank");
+        }
+
+        render();
+    </script>
+</body>
+</html>
